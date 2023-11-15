@@ -6,6 +6,7 @@ import 'survey-core/defaultV2.min.css';
 import {Survey } from 'survey-react-ui'
 import { Model } from 'survey-core';
 import './app.css'
+import { FunctionFactory } from 'survey-core';
 
 declare global {
     interface Window {
@@ -241,52 +242,53 @@ const SeerJSON = {
           "name": "Annual Cost",
           "cellType": "text",
           "totalDisplayStyle": "currency",
-          "defaultValueExpression": "1000",
-          "inputType": "number"
+          "defaultValueExpression": "formatNumberWithCommas([1000])",
+          "inputType": "text"
          },
          {
           "name": "Improvement(%)",
           "cellType": "text",
-          "defaultValueExpression": "10",
-          "inputType": "number"
+          "defaultValueExpression": "formatNumberWithCommas(10)",
+          "inputType": "decimal"
          },
          {
           "name": "Saving",
           "cellType": "text",
-          "defaultValueExpression": "{row.Annual Cost}*{row.Improvement(%)}/100",
-          "inputType": "number"
+          "totalDisplayStyle": "currency",
+          "defaultValueExpression": "calculateAndFormat([{row.Annual Cost}, {row.Improvement(%)}])",
+          "inputType": "text"
          },
          {
           "name": "Year 1",
           "cellType": "text",
-          "defaultValueExpression": "{row.Saving}",
-          "inputType": "number"
+          "defaultValueExpression": "formatNumberWithCommas([{row.Saving}])",
+          "inputType": "decimal"
          },
          {
           "name": "Year 2",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})"
+          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))"
          },
          {
           "name": "Year 3",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})"
+          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))"
          },
          {
           "name": "Year 4",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))",
+          "inputType": "decimal"
          },
          {
           "name": "Year 5",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))",
+          "inputType": "decimal"
          },
          {
           "name": "Total",
@@ -294,8 +296,8 @@ const SeerJSON = {
           "readOnly": true,
           "totalType": "sum",
           "totalDisplayStyle": "currency",
-          "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
-          "inputType": "number"
+          "defaultValueExpression": "formatNumberWithCommas([{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}])",
+          "inputType": "decimal"
          },
          {
           "name": "Justification",
@@ -517,7 +519,7 @@ const SeerJSON = {
           "cellType": "text",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "1000",
-          "inputType": "number"
+          "inputMask": "decimal"
          },
          {
           "name": "Improvement(%)",
@@ -814,16 +816,65 @@ const SeerJSON = {
     "firstPageIsStarted": true
    }
 
+const survey = new Model(SeerJSON);
+
 function SeerSurvey() {
-    const survey = new Model(SeerJSON);
     const [showModal, setShowModal]= useState(false);
     const [justificationText, setJustificationText] = useState('Default');
     const [activeButton, setActiveButton] = useState<HTMLElement | null>(null);
 
+    
+    function formatNumberWithCommas(params: any[]) {
+        console.log(params)
+        let value = Number(params);
+        // Format the number with commas
+        console.log('value',value)
+        console.log('Retrun Value',value.toLocaleString('en-US'))
+        return value.toLocaleString('en-US');
+    }
+    
+
+    function convertFormattedStringToNumber(params: any[]) {
+        console.log(params.length)
+        if (params.length > 0) {
+            
+            
+            const formattedString = params[0];
+            console.log(typeof formattedString, formattedString)
+            if (typeof formattedString === 'string') {
+                console.log("Number",Number(formattedString.replace(/,/g, '')))
+                return Number(formattedString.replace(/,/g, ''));
+            }
+        }
+        return null;
+    }
+
+    function calculateAndFormat(params: any[]) {
+        console.log(params)
+
+        if (params.length >= 2) {
+            const annualCost = convertFormattedStringToNumber([params[0]]);
+            const improvement = convertFormattedStringToNumber([params[1]]);
+    
+            if (annualCost !== null && improvement !== null) {
+                const result = (annualCost * improvement) / 100;
+                console.log(result)
+                return result.toLocaleString('en-US');
+            }
+    
+        }
+        return null;
+    }
+
+    FunctionFactory.Instance.register("formatNumberWithCommas", formatNumberWithCommas);
+    FunctionFactory.Instance.register("convertFormattedStringToNumber", convertFormattedStringToNumber);
+    FunctionFactory.Instance.register("calculateAndFormat", calculateAndFormat);
+
+
     const showJustificationPopup = (event: Event, buttonElement: HTMLElement) => {
         event.preventDefault();
-        console.log(event)
-        console.log(buttonElement)
+        // console.log(event)
+        // console.log(buttonElement)
         // setActiveButton(buttonElement);
         // const justification = buttonElement.getAttribute('data-justification') || '';
         // setJustificationText(justification);
