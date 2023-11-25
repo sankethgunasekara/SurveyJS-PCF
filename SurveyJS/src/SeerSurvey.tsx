@@ -4,15 +4,19 @@ import { useState, useEffect } from 'react';
 import * as React from 'react'
 import 'survey-core/defaultV2.min.css';
 import {Survey } from 'survey-react-ui'
-import { Model } from 'survey-core';
+import { Model, FunctionFactory, MatrixDropdownRowModelBase } from 'survey-core';
+
 import './app.css'
-import { FunctionFactory } from 'survey-core';
 
 declare global {
     interface Window {
-      showJustificationPopup: (event: Event, button: HTMLElement) => void;
+      showJustificationPopup: (event: Event, rowId: string ) => void;
     }
   }
+
+type JustificationType = {
+    [key: string]: string;
+}
   
 const SeerJSON = {
     "title": "Business Value Assessment",
@@ -242,52 +246,55 @@ const SeerJSON = {
           "name": "Annual Cost",
           "cellType": "text",
           "totalDisplayStyle": "currency",
-          "defaultValueExpression": "formatNumberWithCommas([1000])",
-          "inputType": "text"
+          "defaultValueExpression": "1000",
+          "inputType": "decimal",
+        //   "cellHint": "iif({row.Saving}, 'Saving')"
          },
          {
           "name": "Improvement(%)",
           "cellType": "text",
-          "defaultValueExpression": "formatNumberWithCommas(10)",
+          "defaultValueExpression": "10",
           "inputType": "decimal"
          },
          {
           "name": "Saving",
           "cellType": "text",
           "totalDisplayStyle": "currency",
-          "defaultValueExpression": "calculateAndFormat([{row.Annual Cost}, {row.Improvement(%)}])",
-          "inputType": "text"
+          "defaultValueExpression": "",
+          "inputType": "decimal"
          },
          {
           "name": "Year 1",
           "cellType": "text",
-          "defaultValueExpression": "formatNumberWithCommas([{row.Saving}])",
+          "defaultValueExpression": "",
           "inputType": "decimal"
          },
          {
           "name": "Year 2",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))"
+          "defaultValueExpression": "",
+          "inputType": "decimal"
          },
          {
           "name": "Year 3",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))"
+          "defaultValueExpression": "",
+          "inputType": "decimal"
          },
          {
           "name": "Year 4",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))",
+          "defaultValueExpression": "",
           "inputType": "decimal"
          },
          {
           "name": "Year 5",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
-          "defaultValueExpression": "iif({ShowYears} = false, '0', formatNumberWithCommas([{row.Saving}]))",
+          "defaultValueExpression": "",
           "inputType": "decimal"
          },
          {
@@ -296,19 +303,45 @@ const SeerJSON = {
           "readOnly": true,
           "totalType": "sum",
           "totalDisplayStyle": "currency",
-          "defaultValueExpression": "formatNumberWithCommas([{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}])",
+          "defaultValueExpression": "",
           "inputType": "decimal"
          },
          {
           "name": "Justification",
           "cellType": "html",
-          "html": "<button type='button' onclick='showJustificationPopup(event, this);'>Justify</button>"
+        //   "html": function (options: { row: { id: any; }; }) {
+        //     // Access the row object and use its unique identifier
+        //     const rowId = options.row.id;
+        //     return `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Justify</button>`;
+        // },
+        //   "rows": [
+        //     {
+        //         "value": "SalesOrderReturn",
+        //         "text": "Sales Order Return",
+        //         "id": "salesOrderReturn" // Unique identifier
+        //     },
+        //     {
+        //         "value": "SalesOrderCreation",
+        //         "text": "Sales Order Creation",
+        //         "id": "salesOrderCreation" // Unique identifier
+        //     },
+        //     {
+        //         "value": "LostOrders",
+        //         "text": "Lost Orders",
+        //         "id": "lostOrders" // Unique identifier
+        //     },
+        //     {
+        //         "value": "UncontrolledDiscounts",
+        //         "text": "Uncontrolled Discounts",
+        //         "id": "uncontrolledDiscounts" // Unique identifier
+        //     },
+        //   ]
          },
          {
           "name": "Hidden Layer",
           "cellType": "text",
           "visible": true,
-          "defaultValueExpression": "iif({row} = 'Sales Order Return', 'Custom Text 1', iif({row} = 'Sales order creation', 'Custom Text 2', iif({row} = 'Lost orders', 'Custom Text 3', 'Custom Text 4')))"
+        //   "defaultValueExpression": "getCustomText({row})"
          }
         ],
         "choices": [
@@ -335,25 +368,25 @@ const SeerJSON = {
           "cellType": "text",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "1000",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Improvement(%)",
           "cellType": "text",
           "defaultValueExpression": "10",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Saving",
           "cellType": "text",
           "defaultValueExpression": "{row.Annual Cost}*{row.Improvement(%)}/100",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 1",
           "cellType": "text",
           "defaultValueExpression": "{row.Saving}",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 2",
@@ -372,14 +405,14 @@ const SeerJSON = {
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
           "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 5",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
           "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Total",
@@ -388,7 +421,7 @@ const SeerJSON = {
           "totalType": "sum",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
-          "inputType": "number"
+          "inputType": "decimal"
          }
         ],
         "choices": [
@@ -427,25 +460,25 @@ const SeerJSON = {
           "cellType": "text",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "1000",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Improvement(%)",
           "cellType": "text",
           "defaultValueExpression": "10",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Saving",
           "cellType": "text",
           "defaultValueExpression": "{row.Annual Cost}*{row.Improvement(%)}/100",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 1",
           "cellType": "text",
           "defaultValueExpression": "{row.Saving}",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 2",
@@ -464,14 +497,14 @@ const SeerJSON = {
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
           "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 5",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
           "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Total",
@@ -480,7 +513,7 @@ const SeerJSON = {
           "totalType": "sum",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
-          "inputType": "number"
+          "inputType": "decimal"
          }
         ],
         "choices": [
@@ -525,19 +558,19 @@ const SeerJSON = {
           "name": "Improvement(%)",
           "cellType": "text",
           "defaultValueExpression": "10",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Saving",
           "cellType": "text",
           "defaultValueExpression": "{row.Annual Cost}*{row.Improvement(%)}/100",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 1",
           "cellType": "text",
           "defaultValueExpression": "{row.Saving}",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 2",
@@ -556,14 +589,14 @@ const SeerJSON = {
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
           "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Year 5",
           "cellType": "text",
           "visibleIf": "{ShowYears} = true",
           "defaultValueExpression": "iif({ShowYears} = false, '0', {row.Saving})",
-          "inputType": "number"
+          "inputType": "decimal"
          },
          {
           "name": "Total",
@@ -572,7 +605,7 @@ const SeerJSON = {
           "totalType": "sum",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
-          "inputType": "number"
+          "inputType": "decimal"
          }
         ],
         "choices": [
@@ -816,133 +849,177 @@ const SeerJSON = {
     "firstPageIsStarted": true
    }
 
-const survey = new Model(SeerJSON);
+   const survey = new Model(SeerJSON);
 
-function SeerSurvey() {
-    const [showModal, setShowModal]= useState(false);
-    const [justificationText, setJustificationText] = useState('Default');
-    const [activeButton, setActiveButton] = useState<HTMLElement | null>(null);
-
-    
-    function formatNumberWithCommas(params: any[]) {
-        console.log(params)
-        let value = Number(params);
-        // Format the number with commas
-        console.log('value',value)
-        console.log('Retrun Value',value.toLocaleString('en-US'))
-        return value.toLocaleString('en-US');
-    }
-    
-
-    function convertFormattedStringToNumber(params: any[]) {
-        console.log(params.length)
-        if (params.length > 0) {
-            
-            
-            const formattedString = params[0];
-            console.log(typeof formattedString, formattedString)
-            if (typeof formattedString === 'string') {
-                console.log("Number",Number(formattedString.replace(/,/g, '')))
-                return Number(formattedString.replace(/,/g, ''));
-            }
-        }
-        return null;
+survey.onMatrixCellCreated.add(function (survey, options :any) {
+    if (options.column.name === "Justification") {
+        const rowId = options.row.id; 
+        options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Justify</button>`;
     }
 
-    function calculateAndFormat(params: any[]) {
-        console.log(params)
-
-        if (params.length >= 2) {
-            const annualCost = convertFormattedStringToNumber([params[0]]);
-            const improvement = convertFormattedStringToNumber([params[1]]);
-    
-            if (annualCost !== null && improvement !== null) {
-                const result = (annualCost * improvement) / 100;
-                console.log(result)
-                return result.toLocaleString('en-US');
-            }
-    
-        }
-        return null;
+    if (options.column.name === "Hidden Layer") {
+        const rowId = options.row.id;
+        let customText = getCustomTextForRow(rowId);
+        options.cellQuestion.value = customText;
     }
 
-    FunctionFactory.Instance.register("formatNumberWithCommas", formatNumberWithCommas);
-    FunctionFactory.Instance.register("convertFormattedStringToNumber", convertFormattedStringToNumber);
-    FunctionFactory.Instance.register("calculateAndFormat", calculateAndFormat);
-
-
-    const showJustificationPopup = (event: Event, buttonElement: HTMLElement) => {
-        event.preventDefault();
-        // console.log(event)
-        // console.log(buttonElement)
-        // setActiveButton(buttonElement);
-        // const justification = buttonElement.getAttribute('data-justification') || '';
-        // setJustificationText(justification);
-        setShowModal(true);
-
-    };
-
-    const handleSave = () => {
-        if(activeButton) {
-            activeButton.setAttribute('data-justification', justificationText);
+    function getCustomTextForRow(rowId: any) {
+        let customText = '';
+        switch (rowId) {
+            case 'srow_9': customText = 'Uncontrolled Discounts'; break;
+            case 'srow_8': customText = 'Lost orders'; break;
+            case 'srow_7': customText = 'Sales order creation'; break;
+            case 'srow_6': customText = 'Sales Order Return'; break;
+            // Add more cases as needed
+            default: customText = 'Unknown'; break;
         }
-        setShowModal(false);
-    };
+        return customText;
+    }
 
-    const handleCancel = () => {
-        setShowModal(false);
-    };
-    
-
-    useEffect(() => {
-        // This will ensure that the showJustificationPopup function is accessible globally
-        window.showJustificationPopup = showJustificationPopup;
-    }, []);
-    
-
-    // survey.toolbox.getItemByName("title").tooltip = "this is the Title";
-    // survey.onAfterRenderQuestion.add(function (survey, options) {
-    //     if(options.question.name === 'Order to Cash' || options.question.name === 'Hire To Retire' ){
-    //         var annualCostCells = options.htmlElement.querySelectorAll('.annual-cost-cell');
-    //         annualCostCells.forEach(cell => {
-    //             const htmlCell = cell as HTMLElement;  // Cast to HTMLElement
-    //             htmlCell.title = 'Your custom tooltip text here'; // Set the tooltip text
-    //         })
-    //     }
-    // })
-    
-
-    // survey.onMatrixAfterCellRender.add(function (survey, options) {
-    //         let input = options.htmlElement.querySelector("input");
-    //         const updateTitle = () => {
-    //         debugger;
-    //         input.title = input.value;
-    //         };
-    //         options.cellQuestion.updateTitle = updateTitle;
-    //         updateTitle();
-    // });
-    // survey.onMatrixCellValueChanged.add(function (survey, options) {
-    //         setTimeout(() => {
-    //         options.getCellQuestion(options.columnName).updateTitle();
-    //         }, 100);
-    // });
-
+    if (options.column.name === "Annual Cost" && options.cellQuestion) {
+        //Passes a string
+        options.cellQuestion.value = formatNumberWithCommas(options.cellQuestion.value);
+        // console.log("Set Value", options.cellQuestion.value)
+    }
 
     
-    return ( 
-    <div>
-        <Survey model={survey} />
-        {showModal && (
-            <div className="modal">
-                <textarea 
-                    value={justificationText}
-                    onChange={(e) => setJustificationText(e.target.value)}
-                />
-                <button onClick={handleSave}>Save</button>
-                <button onClick={handleCancel}>Cancel</button>
-            </div>
-        )}
-    </div>)
+});
+
+survey.onMatrixCellValueChanged.add(function (survey, options) {
+    if (options.column.name === "Annual Cost" || options.column.name === "Improvement(%)") {
+        let annualCost = options.row.getQuestionByName("Annual Cost").value;
+        let improvement = options.row.getQuestionByName("Improvement(%)").value;
+
+        let annualCostValue = parseFloat(annualCost.toString().replace(/,/g, ''));
+        let improvementValue = parseFloat(improvement.toString().replace(/,/g, ''));
+
+        if (!isNaN(annualCostValue) && !isNaN(improvementValue)) {
+            let savingValue = annualCostValue * improvementValue / 100;
+            let formattedSaving = formatNumberWithCommas(savingValue);
+
+            options.row.getQuestionByName("Saving").value = formattedSaving;
+        }
+    }
+
+    if(options.column.name === "Saving") {
+        let saving = options.row.getQuestionByName("Saving").value;
+
+        options.row.getQuestionByName("Year 1").value = saving;
+
+    }
+    if (options.column.name === "Saving" || options.column.name === "ShowYears") {
+        updateYearValuesAndTotal(survey, options.row);
+    }
+
+})
+
+function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase) {
+    let showYears = survey.getValue("ShowYears");
+    let savingValue = row.getQuestionByName("Saving").value;
+
+    
+    let saving = 0;
+    if (savingValue && typeof savingValue === "string") {
+        saving = parseFloat(savingValue.replace(/,/g, '')) || 0;
+    }
+    
+    if (showYears === true) {
+        for (let year = 2; year <= 5; year++) {
+            row.getQuestionByName("Year " + year).value = formatNumberWithCommas(saving);
+        }
+    }
+    
+    let total = 0;
+    for (let year = 1; year <= (showYears ? 5 : 1); year++) {
+        let yearValue = row.getQuestionByName("Year " + year).value;
+
+        if (yearValue && typeof yearValue === "string") {
+            total += parseFloat(yearValue.replace(/,/g, '')) || 0;
+        }
+    }
+
+    row.getQuestionByName("Total").value = formatNumberWithCommas(total);
 }
 
-export default SeerSurvey
+
+function formatNumberWithCommas(number: number | null | undefined) {
+    // console.log("Number", number)
+    if (number !== undefined && number !== null) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    return number;
+}
+      
+
+
+   function SeerSurvey() {
+       const [showModal, setShowModal] = useState(false);
+       const [justificationText, setJustificationText] = useState('');
+       const [justifications, setJustifications] = useState<JustificationType>({});
+       const [activeRowId, setActiveRowId] = useState('');
+    
+
+       const showJustificationPopup = (event: Event, rowId: string) => {
+           event.preventDefault();
+        //    console.log(rowId)
+           const justification = justifications[rowId] || '';
+           setJustificationText(justification);
+           setActiveRowId(rowId);
+           setShowModal(true);
+       };
+   
+       const handleSave = () => {
+           setJustifications({
+               ...justifications,
+               [activeRowId]: justificationText
+           });
+           setShowModal(false);
+       };
+   
+       const handleCancel = () => {
+           setShowModal(false);
+       };
+
+       useEffect(() => {
+        survey.onMatrixCellValueChanged.add(function (survey, options) {
+            if (options.columnName === "Annual Cost" || options.columnName === "Saving") {
+                // Remove commas and convert to a number for calculation
+                let numericValue = parseFloat(options.value.toString().replace(/,/g, ''));
+                if (!isNaN(numericValue)) {
+                    options.row.setValue(options.columnName, numericValue);
+                }
+            }
+        });
+
+        survey.onMatrixCellValidate.add(function (survey, options) {
+            if (options.columnName === "Annual Cost" || options.columnName === "Saving") {
+                // Format the number with commas for display
+                options.cellQuestion.value = formatNumberWithCommas(options.value);
+            }
+        });
+
+        // ... other existing useEffect code ...
+    }, [survey]);
+   
+       useEffect(() => {
+           window.showJustificationPopup = showJustificationPopup;
+       }, [justifications]);
+   
+       return (
+           <div>
+               <Survey model={survey} />
+               {showModal && (
+                   <div className="modal">
+                       <textarea 
+                           value={justificationText}
+                           onChange={(e) => setJustificationText(e.target.value)}
+                       />
+                       <button onClick={handleSave}>Save</button>
+                       <button onClick={handleCancel}>Cancel</button>
+                   </div>
+               )}
+           </div>
+       );
+   }
+   
+   export default SeerSurvey;
