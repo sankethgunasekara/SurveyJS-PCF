@@ -300,7 +300,6 @@ const SeerJSON = {
           "name": "Total",
           "cellType": "text",
           "readOnly": true,
-          "totalType": "sum",
           "totalDisplayStyle": "currency",
           "inputType": "decimal"
          },
@@ -326,7 +325,11 @@ const SeerJSON = {
          "Sales Order Return",
          "Sales order creation",
          "Lost orders",
-         "Uncontrolled Discounts"
+         "Uncontrolled Discounts",
+         {
+            "value": "TotalCalculation",
+            "text": "   ",
+          }
         ]
        },
        {
@@ -820,15 +823,14 @@ const SeerJSON = {
     "firstPageIsStarted": true
    }
 
-   const survey = new Model(SeerJSON);
+const survey = new Model(SeerJSON);
+
 
 survey.onMatrixCellCreated.add(function (survey, options :any) {
     if (options.column.name === "Justification") {
         const rowId = options.row.id; 
         options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Justify</button>`;
     }
-    
-    
 
     if (options.column.name === "Hidden Layer") {
         const rowId = options.row.id;
@@ -839,10 +841,10 @@ survey.onMatrixCellCreated.add(function (survey, options :any) {
     function getCustomTextForRow(rowId: any) {
         let customText = '';
         switch (rowId) {
-            case 'srow_9': customText = 'Hidden Text 4'; break;
-            case 'srow_8': customText = 'Hidden Text 3'; break;
-            case 'srow_7': customText = 'Hidden Text 2'; break;
-            case 'srow_6': customText = 'Hidden Text 1'; break;
+            case 'srow_8': customText = 'Hidden Text 4'; break;
+            case 'srow_7': customText = 'Hidden Text 3'; break;
+            case 'srow_6': customText = 'Hidden Text 2'; break;
+            case 'srow_5': customText = 'Hidden Text 1'; break;
             default: customText = 'Unknown'; break;
         }
         return customText;
@@ -853,14 +855,47 @@ survey.onMatrixCellCreated.add(function (survey, options :any) {
         options.cellQuestion.value = formatNumberWithCommas(options.cellQuestion.value);
         // console.log("Set Value", options.cellQuestion.value)
     }
-
     
      if (options.column.name !== "Hidden Layer") {
         let customText = getCustomTextForRow(options.row.id);
         options.cellQuestion.title = customText; 
     }
+    if (options.column.name === "Saving" || options.column.name === "ShowYears") {
+        updateYearValuesAndTotal(survey, options.row);
+    }
+    // if (options.column.name === "Total"){
+    //     caluculateTotalWithCommas(survey, options.row.cells)
+    // }
+
+    // if (options.row.name === "TotalCalculation") {
+    //     // Add a custom class to the row
+    //     options.row.cells.forEach((cell: { question: { cssClasses: { mainRoot: string; }; }; }) => {
+    //         cell.question.cssClasses.mainRoot = "hide-row-except-total";
+    //     });
+
+    //     // Special handling for the Total cell
+    //     if (options.column.name === "Total") {
+    //         const totalQuestion = options.cellQuestion;
+    //         totalQuestion.cssClasses.mainRoot += " sv_matrix_cell_total";
+    //     }
+    // }
+
+    if (options.row.name === "TotalCalculation") {
+        // Add a class to the row's HTML element if available
+        const htmlElement = options.row.htmlElement;
+        if (htmlElement) {
+            htmlElement.classList.add("hide-total-calculation-row");
+        }
+
+        options.row.cells.forEach((cell: { column: { name: string; }; question: { cssClasses: { root: string; }; }; }) => {
+            if (cell.column.name !== "Total") {
+                cell.question.cssClasses.root = "hide-cell";
+            }
+        });
+    }
 
     
+
 });
 
 survey.onMatrixCellValueChanged.add(function (survey, options) {
@@ -888,14 +923,15 @@ survey.onMatrixCellValueChanged.add(function (survey, options) {
     if (options.column.name === "Saving" || options.column.name === "ShowYears") {
         updateYearValuesAndTotal(survey, options.row);
     }
-
+    if (options.column.name === "Total"){
+        caluculateTotalWithCommas(survey)
+    }
 })
 
 function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase) {
     let showYears = survey.getValue("ShowYears");
     let savingValue = row.getQuestionByName("Saving").value;
-
-    
+   
     let saving = 0;
     if (savingValue && typeof savingValue === "string") {
         saving = parseFloat(savingValue.replace(/,/g, '')) || 0;
@@ -917,11 +953,10 @@ function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase
         let yearNumber = parseFloat(yearValue) || 0;
 
         total += yearNumber;
-        
+        // console.log(total)      
     }
-    row.getQuestionByName("Total").value = total;
+    row.getQuestionByName("Total").value = formatNumberWithCommas(total);
 }
-
 
 function formatNumberWithCommas(number: number | null | undefined) {
     if (number !== undefined && number !== null) {
@@ -929,7 +964,36 @@ function formatNumberWithCommas(number: number | null | undefined) {
     }
     return number;
 }
-      
+
+function caluculateTotalWithCommas(survey: Model) {
+    const orderToCashMatrix = survey.getQuestionByName("Order to Cash");
+    if (!orderToCashMatrix) return;
+
+    let sum = 0;
+    orderToCashMatrix.visibleRows.forEach((row: { name: string; getQuestionByName: (arg0: string) => any; }) => {
+        if (["Sales Order Return", "Sales order creation", "Lost orders", "Uncontrolled Discounts"].includes(row.name)) {
+            const totalQuestion = row.getQuestionByName("Total");
+            if (totalQuestion) {
+                let totalValue = totalQuestion.value;
+                if (totalValue && typeof totalValue === "string") {
+                    sum += parseFloat(totalValue.replace(/,/g, '')) || 0;
+                }
+            }
+        }
+    });
+
+    const formattedSum = "$" + formatNumberWithCommas(sum);
+
+    // Find the TotalCalculation row and set its value
+    const totalCalcRow = orderToCashMatrix.visibleRows.find((row: { name: string; }) => row.name === "TotalCalculation");
+    if (totalCalcRow) {
+        const totalCalcQuestion = totalCalcRow.getQuestionByName("Total");
+        if (totalCalcQuestion) {
+            totalCalcQuestion.value = formattedSum;
+        }
+    }
+}
+
 
 
    function SeerSurvey() {
