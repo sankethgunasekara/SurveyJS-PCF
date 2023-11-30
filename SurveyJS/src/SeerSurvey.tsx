@@ -392,7 +392,6 @@ const SeerJSON = {
           "name": "Total",
           "cellType": "text",
           "readOnly": true,
-          "totalType": "sum",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
           "inputType": "decimal"
@@ -421,7 +420,11 @@ const SeerJSON = {
          {
           "value": "Training",
           "text": "Training expense"
-         }
+         },
+         {
+            "value": "TotalCalculation",
+            "text": "   ",
+          }
         ]
        },
        {
@@ -445,7 +448,7 @@ const SeerJSON = {
          {
           "name": "Saving",
           "cellType": "text",
-          "defaultValueExpression": "{row.Annual Cost}*{row.Improvement(%)}/100",
+          "defaultValueExpression": "",
           "inputType": "decimal"
          },
          {
@@ -484,7 +487,6 @@ const SeerJSON = {
           "name": "Total",
           "cellType": "text",
           "readOnly": true,
-          "totalType": "sum",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
           "inputType": "decimal"
@@ -513,6 +515,10 @@ const SeerJSON = {
          {
           "value": "UnclaimedDiscounts",
           "text": "Unclaimed discounts"
+         },
+         {
+            "value": "TotalCalculation",
+            "text": "   ",
          }
         ]
        },
@@ -537,7 +543,7 @@ const SeerJSON = {
          {
           "name": "Saving",
           "cellType": "text",
-          "defaultValueExpression": "{row.Annual Cost}*{row.Improvement(%)}/100",
+          "defaultValueExpression": "",
           "inputType": "decimal"
          },
          {
@@ -576,7 +582,6 @@ const SeerJSON = {
           "name": "Total",
           "cellType": "text",
           "readOnly": true,
-          "totalType": "sum",
           "totalDisplayStyle": "currency",
           "defaultValueExpression": "{row.Year 1} + {row.Year 2} + {row.Year 3} + {row.Year 4} + {row.Year 5}",
           "inputType": "decimal"
@@ -605,7 +610,11 @@ const SeerJSON = {
          {
           "value": "Headcount",
           "text": "Head count reduction"
-         }
+         },
+         {
+            "value": "TotalCalculation",
+            "text": "   ",
+          }
         ]
        }
       ],
@@ -827,59 +836,46 @@ const survey = new Model(SeerJSON);
 
 
 survey.onMatrixCellCreated.add(function (survey, options :any) {
+    //Setting up the Justification Column along with the button 
     if (options.column.name === "Justification") {
         const rowId = options.row.id; 
-        options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Justify</button>`;
+        options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Add</button>`;
     }
-
+    //Calling function to set the hidden layer values
     if (options.column.name === "Hidden Layer") {
         const rowId = options.row.id;
         let customText = getCustomTextForRow(rowId);
         options.cellQuestion.value = customText;
     }
-
+    //Setting the Hidden Layer Values 
     function getCustomTextForRow(rowId: any) {
         let customText = '';
         switch (rowId) {
-            case 'srow_8': customText = 'Hidden Text 4'; break;
-            case 'srow_7': customText = 'Hidden Text 3'; break;
-            case 'srow_6': customText = 'Hidden Text 2'; break;
-            case 'srow_5': customText = 'Hidden Text 1'; break;
+            case 'srow_5': customText = 'Hidden Text 4'; break;
+            case 'srow_4': customText = 'Hidden Text 3'; break;
+            case 'srow_3': customText = 'Hidden Text 2'; break;
+            case 'srow_2': customText = 'Hidden Text 1'; break;
+            case 'srow_6': customText = 'Total'; break;
             default: customText = 'Unknown'; break;
         }
         return customText;
     }
-
+    //On cell Create to format the Default values of the Annual Cost
     if (options.column.name === "Annual Cost" && options.cellQuestion) {
         //Passes a string
         options.cellQuestion.value = formatNumberWithCommas(options.cellQuestion.value);
         // console.log("Set Value", options.cellQuestion.value)
     }
-    
+    //Setting the values for the Hover Over 
      if (options.column.name !== "Hidden Layer") {
         let customText = getCustomTextForRow(options.row.id);
         options.cellQuestion.title = customText; 
     }
+    //Calling the Function Update the Total along with commas when showyears is true
     if (options.column.name === "Saving" || options.column.name === "ShowYears") {
         updateYearValuesAndTotal(survey, options.row);
     }
-    // if (options.column.name === "Total"){
-    //     caluculateTotalWithCommas(survey, options.row.cells)
-    // }
-
-    // if (options.row.name === "TotalCalculation") {
-    //     // Add a custom class to the row
-    //     options.row.cells.forEach((cell: { question: { cssClasses: { mainRoot: string; }; }; }) => {
-    //         cell.question.cssClasses.mainRoot = "hide-row-except-total";
-    //     });
-
-    //     // Special handling for the Total cell
-    //     if (options.column.name === "Total") {
-    //         const totalQuestion = options.cellQuestion;
-    //         totalQuestion.cssClasses.mainRoot += " sv_matrix_cell_total";
-    //     }
-    // }
-
+    //Hiding the Unwanted cells in the Total Calculation Row
     if (options.row.name === "TotalCalculation") {
         // Add a class to the row's HTML element if available
         const htmlElement = options.row.htmlElement;
@@ -893,12 +889,10 @@ survey.onMatrixCellCreated.add(function (survey, options :any) {
             }
         });
     }
-
-    
-
 });
 
 survey.onMatrixCellValueChanged.add(function (survey, options) {
+    //Set Value for Saving Column when Annual Cost Changes
     if (options.column.name === "Annual Cost" || options.column.name === "Improvement(%)") {
         let annualCost = options.row.getQuestionByName("Annual Cost").value;
         let improvement = options.row.getQuestionByName("Improvement(%)").value;
@@ -909,25 +903,36 @@ survey.onMatrixCellValueChanged.add(function (survey, options) {
         if (!isNaN(annualCostValue) && !isNaN(improvementValue)) {
             let savingValue = annualCostValue * improvementValue / 100;
             let formattedSaving = formatNumberWithCommas(savingValue);
+            let formattedAnnualCost = formatNumberWithCommas(annualCost);
 
             options.row.getQuestionByName("Saving").value = formattedSaving;
+            options.row.getQuestionByName("Annual Cost").value = formattedAnnualCost;
         }
-    }
 
+        
+
+    }
+    //Setting up the value when the Saving Value changes
     if(options.column.name === "Saving") {
         let saving = options.row.getQuestionByName("Saving").value;
 
         options.row.getQuestionByName("Year 1").value = saving;
+        options.row.getQuestionByName("Saving").value = formatNumberWithCommas(saving);
 
     }
+    //Calling the Function Update the Total along with commas when showyears is true
     if (options.column.name === "Saving" || options.column.name === "ShowYears") {
         updateYearValuesAndTotal(survey, options.row);
     }
+    //Calling Total Calculation for the 4 matrix dropdown questions 
     if (options.column.name === "Total"){
         caluculateTotalWithCommas(survey)
+        caluculateTotalWithCommasHire(survey)
+        caluculateTotalWithCommasPay(survey)
+        caluculateTotalWithCommasReport(survey)
     }
 })
-
+//Total for the Rows 
 function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase) {
     let showYears = survey.getValue("ShowYears");
     let savingValue = row.getQuestionByName("Saving").value;
@@ -957,18 +962,17 @@ function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase
     }
     row.getQuestionByName("Total").value = formatNumberWithCommas(total);
 }
-
+//Foramting with comma
 function formatNumberWithCommas(number: number | null | undefined) {
     if (number !== undefined && number !== null) {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
     return number;
 }
-
+//Calculate the total for Total column in Order to cash
 function caluculateTotalWithCommas(survey: Model) {
     const orderToCashMatrix = survey.getQuestionByName("Order to Cash");
     if (!orderToCashMatrix) return;
-
     let sum = 0;
     orderToCashMatrix.visibleRows.forEach((row: { name: string; getQuestionByName: (arg0: string) => any; }) => {
         if (["Sales Order Return", "Sales order creation", "Lost orders", "Uncontrolled Discounts"].includes(row.name)) {
@@ -993,25 +997,106 @@ function caluculateTotalWithCommas(survey: Model) {
         }
     }
 }
+//Calculate the total for Total Column in Hire to Retire
+function caluculateTotalWithCommasHire(survey: Model) {
+    const hireToRetireMatrix = survey.getQuestionByName("HireToRetire");
+    if (!hireToRetireMatrix) return;
+    let sum = 0;
+    hireToRetireMatrix.visibleRows.forEach((row: { name: string; getQuestionByName: (arg0: string) => any; }) => {
+        if (["EmployeeOnboarding", "EmployeeRecruitment", "Payroll", "Training"].includes(row.name)) {
+            const totalQuestion = row.getQuestionByName("Total");
+            if (totalQuestion) {
+                let totalValue = totalQuestion.value;
+                if (totalValue && typeof totalValue === "string") {
+                    sum += parseFloat(totalValue.replace(/,/g, '')) || 0;
+                }
+            }
+        }
+    });
 
+    const formattedSum = "$" + formatNumberWithCommas(sum);
 
+    // Find the TotalCalculation row and set its value
+    const totalCalcRow = hireToRetireMatrix.visibleRows.find((row: { name: string; }) => row.name === "TotalCalculation");
+    if (totalCalcRow) {
+        const totalCalcQuestion = totalCalcRow.getQuestionByName("Total");
+        if (totalCalcQuestion) {
+            totalCalcQuestion.value = formattedSum;
+        }
+    }
+}
+//Calculate the total for Total Column in Procurement Pay
+function caluculateTotalWithCommasPay(survey: Model) {
+    const procureToPayMatrix = survey.getQuestionByName("ProcureToPay");
+    if (!procureToPayMatrix) return;
+    let sum = 0;
+    procureToPayMatrix.visibleRows.forEach((row: { name: string; getQuestionByName: (arg0: string) => any; }) => {
+        if (["PurchaseOrderReturn", "Purchaseordercreation", "PurchaseApproval", "UnclaimedDiscounts"].includes(row.name)) {
+            const totalQuestion = row.getQuestionByName("Total");
+            if (totalQuestion) {
+                let totalValue = totalQuestion.value;
+                if (totalValue && typeof totalValue === "string") {
+                    sum += parseFloat(totalValue.replace(/,/g, '')) || 0;
+                }
+            }
+        }
+    });
 
-   function SeerSurvey() {
+    const formattedSum = "$" + formatNumberWithCommas(sum);
+
+    // Find the TotalCalculation row and set its value
+    const totalCalcRow = procureToPayMatrix.visibleRows.find((row: { name: string; }) => row.name === "TotalCalculation");
+    if (totalCalcRow) {
+        const totalCalcQuestion = totalCalcRow.getQuestionByName("Total");
+        if (totalCalcQuestion) {
+            totalCalcQuestion.value = formattedSum;
+        }
+    }
+}
+//Calculate the total for Total Column in Record to report
+function caluculateTotalWithCommasReport(survey: Model) {
+    const recorToReportMatrix = survey.getQuestionByName("RecordToReport");
+    if (!recorToReportMatrix) return;
+    let sum = 0;
+    recorToReportMatrix.visibleRows.forEach((row: { name: string; getQuestionByName: (arg0: string) => any; }) => {
+        if (["PeriodClose", "YearClose", "BankRec", "Headcount"].includes(row.name)) {
+            const totalQuestion = row.getQuestionByName("Total");
+            if (totalQuestion) {
+                let totalValue = totalQuestion.value;
+                if (totalValue && typeof totalValue === "string") {
+                    sum += parseFloat(totalValue.replace(/,/g, '')) || 0;
+                }
+            }
+        }
+    });
+
+    const formattedSum = "$" + formatNumberWithCommas(sum);
+
+    // Find the TotalCalculation row and set its value
+    const totalCalcRow = recorToReportMatrix.visibleRows.find((row: { name: string; }) => row.name === "TotalCalculation");
+    if (totalCalcRow) {
+        const totalCalcQuestion = totalCalcRow.getQuestionByName("Total");
+        if (totalCalcQuestion) {
+            totalCalcQuestion.value = formattedSum;
+        }
+    }
+}
+
+function SeerSurvey() {
        const [showModal, setShowModal] = useState(false);
        const [justificationText, setJustificationText] = useState('');
        const [justifications, setJustifications] = useState<JustificationType>({});
        const [activeRowId, setActiveRowId] = useState('');
     
-
+       //Handle the Justification popup
        const showJustificationPopup = (event: Event, rowId: string) => {
            event.preventDefault();
-        //    console.log(rowId)
            const justification = justifications[rowId] || '';
            setJustificationText(justification);
            setActiveRowId(rowId);
            setShowModal(true);
        };
-   
+       //Handle save in Justification
        const handleSave = () => {
            setJustifications({
                ...justifications,
@@ -1019,7 +1104,7 @@ function caluculateTotalWithCommas(survey: Model) {
            });
            setShowModal(false);
        };
-   
+       //Handle cancel in Justification
        const handleCancel = () => {
            setShowModal(false);
        };
