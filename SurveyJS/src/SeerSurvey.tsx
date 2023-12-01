@@ -1167,13 +1167,22 @@ function SeerSurvey() {
            <div>
                <Survey model={survey} />
                {showModal && (
-                   <div className="modal">
-                       <textarea 
-                           value={justificationText}
-                           onChange={(e) => setJustificationText(e.target.value)}
-                       />
-                       <button onClick={handleSave}>Save</button>
-                       <button onClick={handleCancel}>Cancel</button>
+                   <div className="modal-backdrop">
+                    <div className='modal'>
+                      <div className='modal-header'>
+                        <span className='modal-title'>Add Survey</span>
+                      </div>
+                       <div className='modal-body'>
+                           <textarea placeholder='Enter Survey Name'
+                               value={justificationText}
+                               onChange={(e) => setJustificationText(e.target.value)}
+                           />
+                       </div>
+                       <div className='modal-footer'>
+                        <button className="btn btn-cancel mr-10" onClick={handleCancel}>Cancel</button>
+                        <button className='btn btn-primary' onClick={handleSave}>Save</button>
+                       </div>
+                       </div>
                    </div>
                )}
            </div>

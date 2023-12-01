@@ -2,18 +2,6 @@
     content: attr(title);
 }
 
-.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
-    z-index: 1000;
-}
-
 .hide-row-except-total .sv_matrix_cell:not(.sv_matrix_cell_total) {
     display: none;
 }
@@ -30,45 +18,90 @@
     display: none;
 }
 
-.modal {
+.modal-backdrop {
+    z-index: 99;
+    padding-top: 100px;
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    background: white;
-    padding: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); 
-    border-radius: 8px;
-    max-width: 500px;
+    left: 0;
+    top: 0;
     width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal {
     box-sizing: border-box;
+    background: #F5F8FA;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); 
+    border-radius: 5px;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    width: 100%;
+}
+
+.modal-body {
+    background-color: #FFFFFF;
+    padding: 20px;
+}
+
+.modal-footer {
+    padding-top:20px;
+    text-align: right;    
+}
+
+.modal-header {
+    text-align: left;
+    padding-bottom: 20px;
+}
+
+.modal-header .modal-title {
+    color: #292D32;
+    font-size: 20px;
+    font-weight: 600;
 }
 
 .modal textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 20px;
     border-radius: 4px;
-    border: 1px solid #ccc;
+    border: 1px solid #cacaca;
     box-sizing: border-box;
+    font-family: "Segoe UI","Helvetica Neue",Arial,sans-serif;
     min-height: 100px;
+    padding: 10px;
+    width: 100%;
 }
 
-.modal button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
+.modal textarea:focus-visible {
+    outline: none;
+}
+
+.modal .btn {
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
-    margin-right: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    height: 35px;
+    min-width: 100px;
+    padding: 10px 15px;
 }
 
-.modal button:nth-child(2) { 
-    background-color: #1db394; 
-    color: white;
+.modal .btn-primary { 
+    background-color: #00AEA7; 
+    border: 1px solid #00AEA7;
+    color: #FFFFFF;
 }
 
-.modal button:hover {
+.modal .btn-cancel { 
+    background-color: transparent;
+    border: 1px solid #00AEA7; 
+    color: #00AEA7;
+}
+
+.modal .btn:hover {
     opacity: 0.8;
+}
+
+.mr-10 {
+    margin-right: 10px;
 }
