@@ -836,17 +836,14 @@ const survey = new Model(SeerJSON);
 
 
 survey.onMatrixCellCreated.add(function (survey, options :any) {
-    //Setting up the Justification Column along with the button 
-    // if (options.column.name === "Justification") {
-    //     const rowId = options.row.id; 
-    //     options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Add</button>`;
-    // }
+    
     //Calling function to set the hidden layer values
     if (options.column.name === "Hidden Layer") {
         const rowId = options.row.id;
         let customText = getCustomTextForRow(rowId);
         options.cellQuestion.value = customText;
     }
+
     //Setting the Hidden Layer Values 
     function getCustomTextForRow(rowId: any) {
         let customText = '';
@@ -860,21 +857,24 @@ survey.onMatrixCellCreated.add(function (survey, options :any) {
         }
         return customText;
     }
+
     //On cell Create to format the Default values of the Annual Cost
     if (options.column.name === "Annual Cost" && options.cellQuestion) {
         //Passes a string
         options.cellQuestion.value = formatNumberWithCommas(options.cellQuestion.value);
-        // console.log("Set Value", options.cellQuestion.value)
     }
+
     //Setting the values for the Hover Over 
      if (options.column.name !== "Hidden Layer") {
         let customText = getCustomTextForRow(options.row.id);
         options.cellQuestion.title = customText; 
     }
+
     //Calling the Function Update the Total along with commas when showyears is true
     if (options.column.name === "Saving" || options.column.name === "ShowYears") {
         updateYearValuesAndTotal(survey, options.row);
     }
+
     //Hiding the Unwanted cells in the Total Calculation Row
     if (options.row.name === "TotalCalculation") {
         // Add a class to the row's HTML element if available
@@ -903,7 +903,7 @@ survey.onMatrixCellValueChanged.add(function (survey, options) {
         if (!isNaN(annualCostValue) && !isNaN(improvementValue)) {
             let savingValue = annualCostValue * improvementValue / 100;
             let formattedSaving = formatNumberWithCommas(savingValue);
-            let formattedAnnualCost = formatNumberWithCommas(annualCost);
+            let formattedAnnualCost = formatNumberWithCommas(annualCostValue);
 
             options.row.getQuestionByName("Saving").value = formattedSaving;
             options.row.getQuestionByName("Annual Cost").value = formattedAnnualCost;
@@ -912,18 +912,20 @@ survey.onMatrixCellValueChanged.add(function (survey, options) {
         
 
     }
+
     //Setting up the value when the Saving Value changes
     if(options.column.name === "Saving") {
         let saving = options.row.getQuestionByName("Saving").value;
-
-        options.row.getQuestionByName("Year 1").value = saving;
-        options.row.getQuestionByName("Saving").value = formatNumberWithCommas(saving);
-
+        let savingsValue = parseFloat(saving.toString().replace(/,/g, ''));
+        options.row.getQuestionByName("Year 1").value = formatNumberWithCommas(savingsValue);
+        options.row.getQuestionByName("Saving").value = formatNumberWithCommas(savingsValue);
     }
+
     //Calling the Function Update the Total along with commas when showyears is true
     if (options.column.name === "Saving" || options.column.name === "ShowYears") {
         updateYearValuesAndTotal(survey, options.row);
     }
+
     //Calling Total Calculation for the 4 matrix dropdown questions 
     if (options.column.name === "Total"){
         caluculateTotalWithCommas(survey)
@@ -932,6 +934,7 @@ survey.onMatrixCellValueChanged.add(function (survey, options) {
         caluculateTotalWithCommasReport(survey)
     }
 })
+
 //Total for the Rows 
 function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase) {
     let showYears = survey.getValue("ShowYears");
@@ -962,13 +965,15 @@ function updateYearValuesAndTotal(survey: Model, row: MatrixDropdownRowModelBase
     }
     row.getQuestionByName("Total").value = formatNumberWithCommas(total);
 }
-//Foramting with comma
+
+//Formating with comma
 function formatNumberWithCommas(number: number | null | undefined) {
     if (number !== undefined && number !== null) {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
     return number;
 }
+
 //Calculate the total for Total column in Order to cash
 function caluculateTotalWithCommas(survey: Model) {
     const orderToCashMatrix = survey.getQuestionByName("Order to Cash");
@@ -997,6 +1002,7 @@ function caluculateTotalWithCommas(survey: Model) {
         }
     }
 }
+
 //Calculate the total for Total Column in Hire to Retire
 function caluculateTotalWithCommasHire(survey: Model) {
     const hireToRetireMatrix = survey.getQuestionByName("HireToRetire");
@@ -1025,6 +1031,7 @@ function caluculateTotalWithCommasHire(survey: Model) {
         }
     }
 }
+
 //Calculate the total for Total Column in Procurement Pay
 function caluculateTotalWithCommasPay(survey: Model) {
     const procureToPayMatrix = survey.getQuestionByName("ProcureToPay");
@@ -1053,6 +1060,7 @@ function caluculateTotalWithCommasPay(survey: Model) {
         }
     }
 }
+
 //Calculate the total for Total Column in Record to report
 function caluculateTotalWithCommasReport(survey: Model) {
     const recorToReportMatrix = survey.getQuestionByName("RecordToReport");
@@ -1170,10 +1178,10 @@ function SeerSurvey() {
                    <div className="modal-backdrop">
                     <div className='modal'>
                       <div className='modal-header'>
-                        <span className='modal-title'>Add Survey</span>
+                        <span className='modal-title'>Add Any Justifications</span>
                       </div>
                        <div className='modal-body'>
-                           <textarea placeholder='Enter Survey Name'
+                           <textarea placeholder='Enter Justification'
                                value={justificationText}
                                onChange={(e) => setJustificationText(e.target.value)}
                            />
