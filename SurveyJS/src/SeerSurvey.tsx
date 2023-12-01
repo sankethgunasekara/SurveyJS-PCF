@@ -837,10 +837,10 @@ const survey = new Model(SeerJSON);
 
 survey.onMatrixCellCreated.add(function (survey, options :any) {
     //Setting up the Justification Column along with the button 
-    if (options.column.name === "Justification") {
-        const rowId = options.row.id; 
-        options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Add</button>`;
-    }
+    // if (options.column.name === "Justification") {
+    //     const rowId = options.row.id; 
+    //     options.cellQuestion.html = `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>Add</button>`;
+    // }
     //Calling function to set the hidden layer values
     if (options.column.name === "Hidden Layer") {
         const rowId = options.row.id;
@@ -1082,12 +1082,43 @@ function caluculateTotalWithCommasReport(survey: Model) {
     }
 }
 
+
 function SeerSurvey() {
        const [showModal, setShowModal] = useState(false);
        const [justificationText, setJustificationText] = useState('');
        const [justifications, setJustifications] = useState<JustificationType>({});
        const [activeRowId, setActiveRowId] = useState('');
-    
+
+       //For the button to access the justification state
+       survey.onMatrixCellCreated.add(function (survey, options: any) { 
+        if (options.column.name === "Justification") {
+            const rowId = options.row.id;
+            options.cellQuestion.html = getButtonHtml(rowId);
+        }
+       })
+
+       //Refresh the column when there is a change in the state 
+       const refreshSurvey = () => {
+        survey.getAllQuestions().forEach(question => {
+            if (question.getType() === "matrixdropdown") {
+                question.visibleRows.forEach((row: { cells: any[]; id: any; }) => {
+                    const cell = row.cells.find((c: { column: { name: string; }; }) => c.column.name === "Justification");
+                    if (cell) {
+                        const rowId = row.id;
+                        cell.question.html = getButtonHtml(rowId);
+                    }
+                });
+            }
+        });
+        survey.render();
+    };
+
+        //Check the condition of the button 
+       const getButtonHtml = (rowId: string | number) => {
+        const buttonText = justifications[rowId] && justifications[rowId].length > 0 ? "Edit" : "Add";
+        return `<button type='button' onclick='showJustificationPopup(event, "${rowId}");'>${buttonText}</button>`;
+        };
+
        //Handle the Justification popup
        const showJustificationPopup = (event: Event, rowId: string) => {
            event.preventDefault();
@@ -1098,11 +1129,12 @@ function SeerSurvey() {
        };
        //Handle save in Justification
        const handleSave = () => {
-           setJustifications({
-               ...justifications,
-               [activeRowId]: justificationText
-           });
-           setShowModal(false);
+        const newJustifications = {
+            ...justifications,
+            [activeRowId]: justificationText
+        };
+        setJustifications(newJustifications);
+        setShowModal(false);
        };
        //Handle cancel in Justification
        const handleCancel = () => {
@@ -1128,6 +1160,7 @@ function SeerSurvey() {
    
        useEffect(() => {
            window.showJustificationPopup = showJustificationPopup;
+           refreshSurvey();
        }, [justifications]);
    
        return (
